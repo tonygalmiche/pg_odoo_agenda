@@ -35,15 +35,16 @@
         <field name="res_model">calendar.event</field>
         <field name="view_mode">tree,form</field>
         <field name="limit">100</field>
-        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_mymeetings': True}</field>
     </record>
-    <!-- <menuitem 
+    <menuitem 
         name="Mes rendez-vous" 
         id="is_mes_rendez_vous_menu" 
         parent="calendar.mail_menu_calendar" 
         sequence="10"  
         action="is_mes_rendez_vous_action"
-    /> -->
+    />
 
 
     <!--calendar.attendee-->
@@ -54,6 +55,7 @@
             <tree>
                 <field name="event_id"/>
                 <field name="partner_id"/>
+                <field name="is_user_id" optional="hide"/>
                 <field name="state"/>
                 <field name="email" widget="email"/>
                 <button name="do_tentative" states="needsAction,declined,accepted" string="Uncertain" type="object" icon="fa-asterisk"/>
@@ -62,19 +64,42 @@
             </tree>
         </field>
     </record>
+    <record id="is_mes_invitations_search" model="ir.ui.view">
+        <field name="name">is_mes_invitations_search</field>
+        <field name="model">calendar.attendee</field>
+        <field name="arch" type="xml">
+            <search string="Search attendees">
+                <field name="event_id"/>
+                <field name="partner_id"/>
+                <field name="is_user_id"/>
+                <field name="state"/>
+                <field name="email"/>
+                <separator/>
+                <filter string="Nécessite une action" name="needsAction" domain="[('state', '=', 'needsAction')]"/>
+                <separator/>
+                <group expand="0" string="Regrouper par">
+                    <filter string="Etat" name="state" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
     <record id="is_mes_invitations_action" model="ir.actions.act_window">
         <field name="name">Mes invitations</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">calendar.attendee</field>
         <field name="view_mode">tree,form</field>
         <field name="limit">100</field>
-        <field name="domain">[]</field>
+        <field name="domain">[('is_user_id','=',uid),('event_id.start', '&gt;=', context_today().strftime('%Y-%m-%d'))]</field>
+        <field name="context">{'search_default_needsAction': True}</field>
     </record>
-    <!-- <menuitem 
+
+
+
+    <menuitem 
         name="Mes invitations" 
         id="is_mes_invitations_menu" 
         parent="calendar.mail_menu_calendar" 
         sequence="20"  
         action="is_mes_invitations_action"
-    /> -->
+    />
 </odoo>

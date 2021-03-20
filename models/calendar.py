@@ -2,6 +2,30 @@
 from odoo import api, fields, models, _
 
 
+class CalendarAttendee(models.Model):
+    _inherit = 'calendar.attendee'
+
+
+    @api.depends('partner_id')
+    def _compute_is_user_id(self):
+        for obj in self:
+            print(obj,obj.partner_id)
+            user_id=False
+            if obj.partner_id:
+                users = self.env['res.users'].search([
+                    ('partner_id', '=', obj.partner_id.id),
+                ])
+                if users:
+                    user_id=users[0].id
+                print(users,user_id)
+            obj.is_user_id=user_id
+
+
+    is_user_id = fields.Many2one('res.users', 'Utilisateur', compute='_compute_is_user_id', store=True, readonly=True, index=True)
+
+
+
+
 # class Meeting(models.Model):
 #     _inherit = 'calendar.event'
 
