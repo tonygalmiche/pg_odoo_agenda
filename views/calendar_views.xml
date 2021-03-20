@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--calendar.event-->
+    <record id="is_view_calendar_event_tree" model="ir.ui.view">
+        <field name="name">is_view_calendar_event_tree</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="description" optional="hide"/>
+                <field name="user_id"     optional="hide"/>
+            </field>
+            <field name="duration" position="replace">
+                <field name="create_date" optional="hide"/>
+            </field>
+            <field name="stop" position="after">
+                <field name="duration" widget="float_time" readonly="1"/>
+            </field>
+            <field name="partner_ids" position="replace">
+                <field name="partner_ids" widget="many2many_tags" optional="hide"/>
+                <field name="alarm_ids"   widget="many2many_tags" optional="hide"/>
+                <field name="categ_ids"   widget="many2many_tags" optional="hide"/>
+                <field name="privacy" optional="hide"/>
+                <field name="show_as" optional="hide"/>
+            </field>
+            <field name="location" position="attributes">
+                <attribute name="optional">show</attribute>
+            </field>
+        </field>
+    </record> 
+    <record id="is_mes_rendez_vous_action" model="ir.actions.act_window">
+        <field name="name">Mes rendez-vous</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">calendar.event</field>
+        <field name="view_mode">tree,form</field>
+        <field name="limit">100</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+    </record>
+    <!-- <menuitem 
+        name="Mes rendez-vous" 
+        id="is_mes_rendez_vous_menu" 
+        parent="calendar.mail_menu_calendar" 
+        sequence="10"  
+        action="is_mes_rendez_vous_action"
+    /> -->
+
+
+    <!--calendar.attendee-->
+    <record id="is_mes_invitations_tree" model="ir.ui.view">
+        <field name="name">is_mes_invitations_tree</field>
+        <field name="model">calendar.attendee</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="event_id"/>
+                <field name="partner_id"/>
+                <field name="state"/>
+                <field name="email" widget="email"/>
+                <button name="do_tentative" states="needsAction,declined,accepted" string="Uncertain" type="object" icon="fa-asterisk"/>
+                <button name="do_accept" string="Accept" states="needsAction,tentative,declined" type="object" icon="fa-check text-success"/>
+                <button name="do_decline" string="Decline" states="needsAction,tentative,accepted" type="object" icon="fa-times-circle text-danger"/>
+            </tree>
+        </field>
+    </record>
+    <record id="is_mes_invitations_action" model="ir.actions.act_window">
+        <field name="name">Mes invitations</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">calendar.attendee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="limit">100</field>
+        <field name="domain">[]</field>
+    </record>
+    <!-- <menuitem 
+        name="Mes invitations" 
+        id="is_mes_invitations_menu" 
+        parent="calendar.mail_menu_calendar" 
+        sequence="20"  
+        action="is_mes_invitations_action"
+    /> -->
+</odoo>

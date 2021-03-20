@@ -20,6 +20,7 @@
     "data" : [
         "security/ir.model.access.csv",
         "security/ir.rule.xml",
+        "views/calendar_views.xml",
         "views/menu.xml",
     ],
     "installable": True,

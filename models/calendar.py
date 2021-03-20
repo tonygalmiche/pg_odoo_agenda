@@ -4,6 +4,21 @@ from odoo import api, fields, models, _
 
 # class Meeting(models.Model):
 #     _inherit = 'calendar.event'
+
+
+#     def _compute_is_je_participe(self):
+#         for obj in self:
+#             test=False
+#             if self.env.user.partner_id in obj.partner_ids:
+#                 test=True
+#             obj.is_je_participe=test
+#     is_je_participe = fields.Boolean('Je participe', compute='_compute_is_je_participe')
+
+
+
+
+# class Meeting(models.Model):
+#     _inherit = 'calendar.event'
  
 #     @api.model_create_multi
 #     def create(self, vals_list):
