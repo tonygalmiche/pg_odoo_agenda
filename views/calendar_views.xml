@@ -29,14 +29,27 @@
             </field>
         </field>
     </record> 
+
+    <record id="is_view_calendar_event_search" model="ir.ui.view">
+        <field name="name">is_view_calendar_event_search</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_search"/>
+        <field name="arch" type="xml">
+            <filter name="mymeetings" position="after">
+                <filter string="Rendez-vous acceptés" name="rdv_acceptes" domain="['|',('user_id','=',uid),'&amp;',('attendee_ids.partner_id.user_ids', 'in', [uid]),('attendee_ids.state','!=','declined')]"/>
+                <filter string="Rendez-vous refusés"  name="rdv_refuses"  domain="[('attendee_ids.partner_id.user_ids', 'in', [uid]),('attendee_ids.state','=','declined')]"/>
+                <filter string="Rendez-vous créés"    name="rdv_crees"    domain="[('user_id','=',uid)]"/>
+            </filter>
+        </field>
+    </record> 
     <record id="is_mes_rendez_vous_action" model="ir.actions.act_window">
         <field name="name">Mes rendez-vous</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">calendar.event</field>
         <field name="view_mode">tree,form</field>
         <field name="limit">100</field>
-        <field name="domain">[('start', '&gt;=', context_today().strftime('%Y-%m-%d'))]</field>
-        <field name="context">{'search_default_mymeetings': True}</field>
+        <field name="domain">[('start', '&gt;=', context_today().strftime('%Y-%m-%d')), ('partner_ids.user_ids', 'in', [uid]) ]</field>
+        <field name="context">{'search_default_rdv_acceptes': True}</field>
     </record>
     <menuitem 
         name="Mes rendez-vous" 
