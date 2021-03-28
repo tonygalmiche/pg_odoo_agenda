@@ -6,26 +6,55 @@ from odoo import api, fields, models, _
 class CalendarEvent(models.Model):
     _inherit = 'calendar.event'
 
+
+    @api.onchange('partner_ids','start','duration')
+    def _compute_is_alerte(self):
+
+        for obj in self:
+            alertes=[]
+            for partner in obj.partner_ids:
+                SQL="""
+                    SELECT rp.name, e.name event_name
+                    FROM calendar_event e join calendar_attendee a on e.id=a.event_id
+                                          join res_partner      rp on a.partner_id=rp.id 
+                    WHERE 
+                        e.active='t' and 
+                        e.id<>%s and
+                        a.state not in ('declined') and
+                        a.partner_id=%s and ( 
+                            (e.start<%s and e.stop>%s) or
+                            (e.start<%s and e.stop>%s) or
+                            (e.start<%s and e.stop>%s) or
+                            (e.start>%s and e.stop<%s) or
+                            (e.start=%s and e.stop=%s)
+                        )
+                    ORDER BY rp.name, e.name
+                """
+                self._cr.execute(SQL, [obj._origin.id, partner._origin.id, obj.start, obj.start, obj.stop, obj.stop, obj.start, obj.stop, obj.start, obj.stop, obj.start, obj.stop])
+                events=self._cr.fetchall()
+                for e in events:
+                    msg=e[0]+" : "+e[1]
+                    alertes.append(msg)
+            if len(alertes):
+                alertes="\n".join(alertes)
+            else:
+                alertes=False
+            obj.is_alerte=alertes
+
+
+    is_alerte = fields.Text('Alerte', copy=False, compute=_compute_is_alerte)
+
+
     def _ajouter_invitation_responsable_action(self):
         for obj in self.browse(self.env.context['active_ids']):
             for partner in obj.partner_ids:
                 if partner not in obj.attendee_ids.partner_id:
-                    print("Ajouter", partner.name,obj.id)
                     vals={
                         "event_id"  : obj.id,
                         "partner_id": partner.id,
                         "state"     : "accepted",
                     }
                     self.env['calendar.attendee'].create(vals)
-
-
-#   id   | event_id | partner_id |    state    |         common_name          | availability |           access_token           | create_uid |        create_date         | write_uid |         write_date         | is_user_id 
-# -------+----------+------------+-------------+------------------------------+--------------+----------------------------------+------------+----------------------------+-----------+----------------------------+------------
-#  10670 |     5015 |         65 | accepted    | Laetitia LEBRUN              |              | eab118c4b99344aa965bfc5d46ed7487 |         81 | 2021-03-22 10:14:20.049383 |        64 | 2021-03-22 10:17:38.760978 |         64
-#  10673 |     5016 |         65 | accepted    | Laetitia LEBRUN              |              | 2eca7e6a1ab44d368f81c7847c5eb016 |         81 | 2021-03-22 10:14:20.049383 |        64 | 2021-03-22 10:17:38.760978 |         64
-
-
-
 
 
 class CalendarAttendee(models.Model):
