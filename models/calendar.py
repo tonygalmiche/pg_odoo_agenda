@@ -24,13 +24,20 @@ class CalendarEvent(models.Model):
                         a.partner_id=%s and ( 
                             (e.start<%s and e.stop>%s) or
                             (e.start<%s and e.stop>%s) or
-                            (e.start<%s and e.stop>%s) or
-                            (e.start>%s and e.stop<%s) or
+                            (e.start<=%s and e.stop>=%s) or
+                            (e.start>=%s and e.stop<=%s) or
                             (e.start=%s and e.stop=%s)
                         )
                     ORDER BY rp.name, e.name
                 """
-                self._cr.execute(SQL, [obj._origin.id, partner._origin.id, obj.start, obj.start, obj.stop, obj.stop, obj.start, obj.stop, obj.start, obj.stop, obj.start, obj.stop])
+                self._cr.execute(SQL, [
+                    obj._origin.id, partner._origin.id, 
+                    obj.start, obj.start, 
+                    obj.stop , obj.stop, 
+                    obj.start, obj.stop, 
+                    obj.start, obj.stop, 
+                    obj.start, obj.stop
+                ])
                 events=self._cr.fetchall()
                 for e in events:
                     msg=e[0]+" : "+e[1]
