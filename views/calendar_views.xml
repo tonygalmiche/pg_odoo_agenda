@@ -35,7 +35,16 @@
                 <field name="user_id"     optional="hide"/>
             </field>
             <field name="duration" position="replace">
+                <field name="recurrency"  optional="hide"/>
+                <field name="rrule_type"  optional="hide"/>
+                <field name="end_type"    optional="hide"/>
+                <field name="count"       optional="hide"/>
+                <field name="until"       optional="hide"/>
                 <field name="create_date" optional="hide"/>
+                <field name="write_date"  optional="hide"/>
+                <field name="create_uid"  optional="hide"/>
+                <field name="write_uid"   optional="hide"/>
+                <field name="id"          optional="hide"/>
             </field>
             <field name="stop" position="after">
                 <field name="duration" widget="float_time" readonly="1"/>
@@ -97,6 +106,11 @@
                 <button name="do_tentative" states="needsAction,declined,accepted" string="Uncertain" type="object" icon="fa-asterisk"/>
                 <button name="do_accept" string="Accept" states="needsAction,tentative,declined" type="object" icon="fa-check text-success"/>
                 <button name="do_decline" string="Decline" states="needsAction,tentative,accepted" type="object" icon="fa-times-circle text-danger"/>
+                <field name="create_date" optional="hide"/>
+                <field name="write_date"  optional="hide"/>
+                <field name="create_uid"  optional="hide"/>
+                <field name="write_uid"   optional="hide"/>
+                <field name="id"          optional="hide"/>
             </tree>
         </field>
     </record>
