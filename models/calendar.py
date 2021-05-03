@@ -7,6 +7,11 @@ class CalendarEvent(models.Model):
     _inherit = 'calendar.event'
 
 
+    def synchroniser_google_action(self):
+        for obj in self.browse(self.env.context['active_ids']):
+            print(obj)
+
+
     @api.onchange('partner_ids','start','duration')
     def _compute_is_alerte(self):
 

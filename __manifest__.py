@@ -18,6 +18,7 @@
     "init_xml" : [],
     "demo_xml" : [],
     "data" : [
+        "security/res.groups.xml",
         "security/ir.model.access.csv",
         "security/ir.rule.xml",
         "views/calendar_views.xml",

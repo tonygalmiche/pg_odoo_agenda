@@ -10,6 +10,15 @@
         <field name="state">code</field>
         <field name="code">action = model._ajouter_invitation_responsable_action()</field>
     </record>
+    <record id="synchroniser_google_actions_server" model="ir.actions.server">
+        <field name="name">Synchroniser avec Google</field>
+        <field name="groups_id" eval="[(4, ref('pg_odoo_agenda.is_google_synchronisation_group'))]"/>
+        <field name="model_id" ref="calendar.model_calendar_event"/>
+        <field name="binding_model_id" ref="calendar.model_calendar_event"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">action = model.synchroniser_google_action()</field>
+    </record>
 
     <record id="is_view_calendar_event_form" model="ir.ui.view">
         <field name="name">is_view_calendar_event_form</field>
