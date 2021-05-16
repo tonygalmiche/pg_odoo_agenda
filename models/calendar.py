@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+from uuid import uuid4
 from odoo import api, fields, models, _
-
+from odoo.addons.google_calendar.models.google_sync import google_calendar_token
+from odoo.addons.google_calendar.utils.google_calendar import GoogleCalendarService
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class CalendarEvent(models.Model):
@@ -8,8 +12,55 @@ class CalendarEvent(models.Model):
 
 
     def synchroniser_google_action(self):
+
+
+        _logger.warning("## synchroniser_google_action self = %s" % (self))
+
+
         for obj in self.browse(self.env.context['active_ids']):
-            print(obj)
+
+            #if not obj.google_id:
+            #    obj.google_id = uuid4().hex
+
+
+            _logger.warning("## synchroniser_google_action obj = %s" % (obj))
+
+            #if obj.google_id:
+            #event_id = obj.id
+            #_logger.warning("## Recherche si évènement existe avant de le créer event_id = %s" % (event_id))
+            #url = "/calendar/v3/calendars/primary/events/%s" % event_id
+            for line in obj.attendee_ids:
+                user=line.is_user_id
+                if user:
+                    with google_calendar_token(user.sudo()) as token:
+                        if token:
+                            _logger.warning("## token = %s" % (token))
+                            headers = {'Content-type': 'application/json', 'Authorization': 'Bearer %s' % token}
+                            params = {'access_token': token}
+                            values = obj._google_values()
+                            _logger.warning("## values = %s" % (values))
+                            google_service = GoogleCalendarService(self.with_user(user).env['google.service'])
+                            email  = line.email
+                            #values["organizer"]   = {'email': email, 'self': True}
+                            #values["attendees"]=[]
+                            #values["description"]="GoogleSync write\ntoto et tutu\nsur 2 lignes\n"+"\n"+email
+
+                            #if not values.get('id'):
+                            #    values['id'] = uuid4().hex
+
+                            event_id = values.get('id')
+                            _logger.warning("## synchroniser_google_action event_id = %s" % (event_id))
+
+
+                            #_logger.warning("## email,google_service = %s,%s" % (email, google_service))
+                            try:
+                                _logger.warning("## _google_patch email = %s" % (email))
+                                obj.with_user(user)._google_patch(google_service, event_id, values, timeout=3)
+                            except:
+                                _logger.exception("## _google_patch  ERROR email = %s" % (email))
+
+
+
 
 
     @api.onchange('partner_ids','start','duration')
