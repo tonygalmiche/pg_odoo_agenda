@@ -2,6 +2,30 @@
 <odoo>
 
     <!--calendar.event-->
+    <!-- <record id="view_calendar_event_calendar_journee" model="ir.ui.view">
+        <field name="name">view_calendar_event_calendar_journee</field>
+        <field name="model">calendar.event</field>
+        <field name="priority" eval="99"/>
+        <field name="arch" type="xml">
+            <calendar mode="day"  js_class="attendee_calendar" string="Meetings" date_start="start" date_stop="stop" date_delay="duration" all_day="allday"
+                event_open_popup="true"
+                event_limit="5"
+                color="user_id">
+                <field name="attendee_status"/>
+                <field name="user_id" string="Responsible" filters="1" widget="many2one_avatar_user"/>
+                <field name="partner_ids" widget="many2many_tags_avatar" write_model="calendar.contacts" write_field="partner_id" avatar_field="image_128"/>
+                <field name="is_highlighted" invisible="1"/>
+                <field name="description"/>
+                <field name="privacy"/>
+                <field name="recurrency" invisible="1"/>
+                <field name="recurrence_update" invisible="1"/>
+            </calendar>
+        </field>
+    </record> -->
+
+
+
+
     <record id="ajouter_invitation_responsable_actions_server" model="ir.actions.server">
         <field name="name">Ajouter invitation responsable</field>
         <field name="model_id" ref="calendar.model_calendar_event"/>
@@ -43,8 +67,19 @@
                     attrs="{'invisible': [('is_alerte','=', False)],'readonly':True}"
                 />
             </field>
+            <!-- <notebook position="before">
+                <button
+                    name="agenda_journee_action"
+                    type="object"
+                    string="Agenda à la journée"
+                />
+            </notebook> -->
         </field>
     </record> 
+
+
+
+
     <record id="is_view_calendar_event_tree" model="ir.ui.view">
         <field name="name">is_view_calendar_event_tree</field>
         <field name="model">calendar.event</field>
@@ -113,6 +148,22 @@
 
 
     <!--calendar.attendee-->
+    <record id="accepter_invitation_actions_server" model="ir.actions.server">
+        <field name="name">Accepter l'invitation</field>
+        <field name="model_id" ref="calendar.model_calendar_attendee"/>
+        <field name="binding_model_id" ref="calendar.model_calendar_attendee"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">action = model._accepter_invitation_actions()</field>
+    </record>
+    <record id="refuser_invitation_actions_server" model="ir.actions.server">
+        <field name="name">Refuser l'invitation</field>
+        <field name="model_id" ref="calendar.model_calendar_attendee"/>
+        <field name="binding_model_id" ref="calendar.model_calendar_attendee"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">action = model._refuser_invitation_actions()</field>
+    </record>
     <record id="is_mes_invitations_tree" model="ir.ui.view">
         <field name="name">is_mes_invitations_tree</field>
         <field name="model">calendar.attendee</field>

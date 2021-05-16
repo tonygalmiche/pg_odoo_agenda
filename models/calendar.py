@@ -140,6 +140,21 @@ class CalendarEvent(models.Model):
                     self.env['calendar.attendee'].create(vals)
 
 
+    # def agenda_journee_action(self):
+    #     for obj in self:
+    #         res= {
+    #             'name': 'Agenda',
+    #             'view_mode': 'calendar',
+    #             'res_model': 'calendar.event',
+    #             'res_id': obj.id,
+    #             'type': 'ir.actions.act_window',
+    #             'view_id': self.env.ref('pg_odoo_agenda.view_calendar_event_calendar_journee').id,
+    #             'domain': [["start","<=","2021-07-04 21:59:59"],["stop",">=","2021-06-27 22:00:00"],["partner_ids","in",[3,7]]],
+    #         }
+    #         print(res)
+    #         return res
+
+
 class CalendarAttendee(models.Model):
     _inherit = 'calendar.attendee'
 
@@ -158,6 +173,19 @@ class CalendarAttendee(models.Model):
 
     is_user_id = fields.Many2one('res.users', 'Utilisateur', compute='_compute_is_user_id', store=True, readonly=True, index=True)
 
+
+
+    def _accepter_invitation_actions(self):
+        for obj in self.browse(self.env.context['active_ids']):
+            obj.state="accepted"
+            obj.event_id.sudo().synchroniser_google_action()
+            print(obj)
+
+    def _refuser_invitation_actions(self):
+        for obj in self.browse(self.env.context['active_ids']):
+            obj.state="declined"
+            obj.event_id.sudo().synchroniser_google_action()
+            print(obj)
 
 
 
