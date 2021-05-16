@@ -105,7 +105,27 @@ class CalendarEvent(models.Model):
             obj.is_alerte=alertes
 
 
-    is_alerte = fields.Text('Alerte', copy=False, compute=_compute_is_alerte)
+    @api.onchange('partner_ids')
+    def _compute_is_participants(self):
+        for obj in self:
+            lines=[]
+            for attendee in obj.attendee_ids:
+                if attendee.state == "declined":
+                    lines.append('-  <del style="color:red">'+attendee.partner_id.name+"</del>")
+                if attendee.state == "accepted":
+                    lines.append('-  <b style="color:green">'+attendee.partner_id.name+"</b>")
+                if attendee.state not in ["declined","accepted"]:
+                    lines.append('-  <i style="color:gray">'+attendee.partner_id.name+"</i>")
+            obj.is_participants = "<br />".join(lines)
+
+
+
+
+
+
+
+    is_alerte       = fields.Text('Alerte'      , copy=False, compute=_compute_is_alerte)
+    is_participants = fields.Text('Participants', copy=False, compute=_compute_is_participants)
 
 
     def _ajouter_invitation_responsable_action(self):
