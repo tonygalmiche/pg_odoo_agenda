@@ -26,7 +26,7 @@
         <field name="inherit_id" ref="calendar.view_calendar_event_calendar"/>
         <field name="arch" type="xml">
             <field name="partner_ids" position="after">
-                <field name="is_participants"  widget="html"/>
+                <field name="is_participants" widget="html"/>
             </field>
         </field>
     </record> 
