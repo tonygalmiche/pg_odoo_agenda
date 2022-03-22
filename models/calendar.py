@@ -12,21 +12,22 @@ class CalendarEvent(models.Model):
 
 
     def synchroniser_google_user(self,event,user):
-        with google_calendar_token(user.sudo()) as token:
-            if token:
-                _logger.warning("## token = %s" % (token))
-                headers = {'Content-type': 'application/json', 'Authorization': 'Bearer %s' % token}
-                params = {'access_token': token}
-                values = event._google_values()
-                _logger.warning("## values = %s" % (values))
-                google_service = GoogleCalendarService(self.with_user(user).env['google.service'])
-                event_id = values.get('id')
-                _logger.warning("## synchroniser_google_action event_id = %s" % (event_id))
-                try:
-                    _logger.warning("## _google_patch event = %s" % (event))
-                    event.with_user(user)._google_patch(google_service, event_id, values, timeout=3)
-                except:
-                    _logger.exception("## _google_patch  ERROR event = %s" % (event))
+        if user:
+            with google_calendar_token(user.sudo()) as token:
+                if token:
+                    _logger.warning("## token = %s" % (token))
+                    headers = {'Content-type': 'application/json', 'Authorization': 'Bearer %s' % token}
+                    params = {'access_token': token}
+                    values = event._google_values()
+                    _logger.warning("## values = %s" % (values))
+                    google_service = GoogleCalendarService(self.with_user(user).env['google.service'])
+                    event_id = values.get('id')
+                    _logger.warning("## synchroniser_google_action event_id = %s" % (event_id))
+                    try:
+                        _logger.warning("## _google_patch event = %s" % (event))
+                        event.with_user(user)._google_patch(google_service, event_id, values, timeout=3)
+                    except:
+                        _logger.exception("## _google_patch  ERROR event = %s" % (event))
 
 
     def synchroniser_google_action(self):
