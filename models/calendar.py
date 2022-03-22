@@ -114,6 +114,11 @@ class CalendarEvent(models.Model):
                     }
                     self.env['calendar.attendee'].create(vals)
 
+    def _mise_a_jour_acceptee_refusee_action(self):
+        for obj in self.browse(self.env.context['active_ids']):
+            for attendee in obj.attendee_ids:
+                attendee.synchro_refusee_acceptee()
+
 
     # def agenda_journee_action(self):
     #     for obj in self:
@@ -127,6 +132,9 @@ class CalendarEvent(models.Model):
     #             'domain': [["start","<=","2021-07-04 21:59:59"],["stop",">=","2021-06-27 22:00:00"],["partner_ids","in",[3,7]]],
     #         }
     #         return res
+
+    is_invitation_refusee_ids  = fields.Many2many(comodel_name='res.partner', relation='calendar_event_res_partner_refusee', column1="event_id", column2="partner_id", string="Utilisateurs ayant refusés")
+    is_invitation_acceptee_ids = fields.Many2many(comodel_name='res.partner', relation='calendar_event_res_partner_acceptee', column1="event_id", column2="partner_id", string="Utilisateurs ayant acceptés")
 
 
 class CalendarAttendee(models.Model):
@@ -145,20 +153,34 @@ class CalendarAttendee(models.Model):
             obj.is_user_id=user_id
     is_user_id = fields.Many2one('res.users', 'Utilisateur', compute='_compute_is_user_id', store=True, readonly=True, index=True)
 
-
-
     def _accepter_invitation_actions(self):
         for obj in self.browse(self.env.context['active_ids']):
             obj.state="accepted"
-
 
     def _refuser_invitation_actions(self):
         for obj in self.browse(self.env.context['active_ids']):
             obj.state="declined"
 
-
     def write(self, vals):
         res = super(CalendarAttendee, self).write(vals)
         self.env['calendar.event'].synchroniser_google_user(self.event_id,self.is_user_id)
+        self.synchro_refusee_acceptee()
         return res
 
+    @api.model
+    def create(self, vals):
+        res = super(CalendarAttendee, self).create(vals)
+        res.synchro_refusee_acceptee()
+        return res
+
+    def synchro_refusee_acceptee(self):
+        for obj in self:
+            declined = []
+            accepted = []
+            for attendee in obj.event_id.attendee_ids:
+                if attendee.state == "declined":
+                    declined.append(attendee.partner_id.id)
+                else:
+                    accepted.append(attendee.partner_id.id)
+            obj.event_id.sudo().write({'is_invitation_refusee_ids': [(6, 0, declined)]})
+            obj.event_id.sudo().write({'is_invitation_acceptee_ids': [(6, 0, accepted)]})

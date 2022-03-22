@@ -26,6 +26,14 @@
 
 
 
+    <record id="mise_a_jour_acceptee_refusee_actions_server" model="ir.actions.server">
+        <field name="name">Mise à jour acceptées/refusées</field>
+        <field name="model_id" ref="calendar.model_calendar_event"/>
+        <field name="binding_model_id" ref="calendar.model_calendar_event"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">action = model._mise_a_jour_acceptee_refusee_action()</field>
+    </record>
     <record id="ajouter_invitation_responsable_actions_server" model="ir.actions.server">
         <field name="name">Ajouter invitation responsable</field>
         <field name="model_id" ref="calendar.model_calendar_event"/>
@@ -67,6 +75,13 @@
                     attrs="{'invisible': [('is_alerte','=', False)],'readonly':True}"
                 />
             </field>
+	    <field name="attendee_ids" position="after">
+		 <group>
+		     <field name="is_invitation_acceptee_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" readonly="1"/>
+		     <field name="is_invitation_refusee_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" readonly="1"/>
+	         </group>
+            </field>
+
             <!-- <notebook position="before">
                 <button
                     name="agenda_journee_action"
@@ -123,8 +138,8 @@
         <field name="inherit_id" ref="calendar.view_calendar_event_search"/>
         <field name="arch" type="xml">
             <filter name="mymeetings" position="after">
-                <filter string="Rendez-vous acceptés" name="rdv_acceptes" domain="['|',('user_id','=',uid),'&amp;',('attendee_ids.partner_id.user_ids', 'in', [uid]),('attendee_ids.state','!=','declined')]"/>
-                <filter string="Rendez-vous refusés"  name="rdv_refuses"  domain="[('attendee_ids.partner_id.user_ids', 'in', [uid]),('attendee_ids.state','=','declined')]"/>
+                <filter string="Rendez-vous acceptés" name="rdv_acceptes" domain="[('is_invitation_acceptee_ids.user_ids', 'in', uid)]"/>
+                <filter string="Rendez-vous refusés"  name="rdv_refuses"  domain="[('is_invitation_refusee_ids.user_ids', 'in', uid)]"/>
                 <filter string="Rendez-vous créés"    name="rdv_crees"    domain="[('user_id','=',uid)]"/>
             </filter>
         </field>
