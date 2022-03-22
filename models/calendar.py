@@ -45,7 +45,7 @@ class CalendarEvent(models.Model):
             alertes=[]
             for partner in obj.partner_ids:
                 SQL="""
-                    SELECT rp.name, e.name event_name
+                    SELECT rp.name, e.name event_name, e.privacy
                     FROM calendar_event e join calendar_attendee a on e.id=a.event_id
                                           join res_partner      rp on a.partner_id=rp.id 
                     WHERE 
@@ -71,7 +71,11 @@ class CalendarEvent(models.Model):
                 ])
                 events=self._cr.fetchall()
                 for e in events:
-                    msg=e[0]+" : "+e[1]
+                    if e[2] == 'private':
+                        event_name = 'Occupé(e)'
+                    else:
+                        event_name = e[1]
+                    msg=e[0]+" : "+event_name
                     alertes.append(msg)
             if len(alertes):
                 alertes="\n".join(alertes)
