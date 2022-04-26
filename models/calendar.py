@@ -10,6 +10,15 @@ _logger = logging.getLogger(__name__)
 class CalendarEvent(models.Model):
     _inherit = 'calendar.event'
 
+    @api.model
+    def search_read(self, *args, **kwargs):
+        # HACK pour ne lister que les événements acceptés ou incertains
+        #      ne pas lister les événements déclinés
+        if 'domain' in kwargs:
+            for idx, elt in enumerate(kwargs['domain']):
+                if elt and elt[0] == 'partner_ids':
+                    kwargs['domain'][idx][0] = 'is_invitation_acceptee_ids'
+        return super(CalendarEvent, self).search_read(*args, **kwargs)
 
     def synchroniser_google_user(self,event,user):
         if user:
