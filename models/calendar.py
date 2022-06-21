@@ -150,7 +150,7 @@ class CalendarEvent(models.Model):
             # Only notify on future events
             if start_date and start_date >= fields.Datetime.now():
                 for attendee in self.attendee_ids:
-                    if attendee.partner_id.id != self.partner_id.id and attendee.state == 'accepted':
+                    if attendee.partner_id.id != self.partner_id.id and attendee.state in ['accepted', 'declined']:
                         attendee.state = 'needsAction'
         return super(CalendarEvent, self).write(values)
 
