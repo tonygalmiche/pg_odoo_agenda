@@ -22,6 +22,7 @@
         "security/ir.model.access.csv",
         "security/ir.rule.xml",
         "views/calendar_views.xml",
+        "views/mail_data.xml",
         "views/menu.xml",
     ],
     "installable": True,

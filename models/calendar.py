@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import base64
 from uuid import uuid4
+
 from odoo import api, fields, models, _
 from odoo.addons.google_calendar.models.google_sync import google_calendar_token
 from odoo.addons.google_calendar.utils.google_calendar import GoogleCalendarService
@@ -142,6 +144,16 @@ class CalendarEvent(models.Model):
     #         }
     #         return res
 
+    def write(self, values):
+        if 'start' in values:
+            start_date = fields.Datetime.to_datetime(values.get('start'))
+            # Only notify on future events
+            if start_date and start_date >= fields.Datetime.now():
+                for attendee in self.attendee_ids:
+                    if attendee.partner_id.id != self.partner_id.id and attendee.state == 'accepted':
+                        attendee.state = 'needsAction'
+        return super(CalendarEvent, self).write(values)
+
     is_invitation_refusee_ids  = fields.Many2many(comodel_name='res.partner', relation='calendar_event_res_partner_refusee', column1="event_id", column2="partner_id", string="Utilisateurs ayant refusés")
     is_invitation_acceptee_ids = fields.Many2many(comodel_name='res.partner', relation='calendar_event_res_partner_acceptee', column1="event_id", column2="partner_id", string="Utilisateurs ayant acceptés")
 
@@ -174,7 +186,75 @@ class CalendarAttendee(models.Model):
         res = super(CalendarAttendee, self).write(vals)
         self.env['calendar.event'].synchroniser_google_user(self.event_id,self.is_user_id)
         self.synchro_refusee_acceptee()
+        if 'state' in vals and vals['state'] == 'declined':
+            self.send_mail_decline()
         return res
+
+    def send_mail_decline(self):
+        attendee = self
+        ics_files = self.mapped('event_id')._get_ics_file()
+        template_xmlid = 'pg_odoo_agenda.calendar_template_meeting_change'
+        invitation_template = self.env.ref(template_xmlid, raise_if_not_found=False)
+        if not invitation_template:
+            _logger.warning("Template %s could not be found. %s not notified." % (template_xmlid, self))
+            return
+        calendar_view = self.env.ref('calendar.view_calendar_event_calendar')
+        # prepare rendering context for mail template
+        force_send = True
+        ignore_recurrence = False
+        colors = {
+            'needsAction': 'grey',
+            'accepted': 'green',
+            'tentative': '#FFFF00',
+            'declined': 'red'
+        }
+        rendering_context = dict(self._context)
+        rendering_context.update({
+            'colors': colors,
+            'ignore_recurrence': ignore_recurrence,
+            'action_id': self.env['ir.actions.act_window'].sudo().search([('view_id', '=', calendar_view.id)], limit=1).id,
+            'dbname': self._cr.dbname,
+            'base_url': self.env['ir.config_parameter'].sudo().get_param('web.base.url', default='http://localhost:8069'),
+        })
+        #
+        event_id = attendee.event_id.id
+        ics_file = ics_files.get(event_id)
+
+        attachment_values = []
+        if ics_file:
+            attachment_values = [
+                (0, 0, {'name': 'invitation.ics',
+                        'mimetype': 'text/calendar',
+                        'datas': base64.b64encode(ics_file)})
+            ]
+        body = invitation_template.with_context(rendering_context)._render_field(
+            'body_html',
+            attendee.ids,
+            compute_lang=True,
+            post_process=True)[attendee.id]
+
+        subject = invitation_template._render_field(
+            'subject',
+            attendee.ids,
+            compute_lang=True)[attendee.id]
+
+
+        #** Permet d'envoyer un mail au responsable en changeant l'emetteur du mail
+        email_from  = self.env.user.email_formatted
+        author_id = self.env.user.id
+        #if attendee.event_id.user_id.partner_id.id in attendee.partner_id.ids:
+        #    email_from = "robot@plastigray.com"
+        #    author_id  = False
+
+        attendee.event_id.with_context(no_document=True).message_notify(
+            email_from=email_from,
+            author_id=author_id,
+            body=body,
+            subject="[odoo-agenda] "+subject,
+            partner_ids=[attendee.event_id.user_id.partner_id.id],
+            email_layout_xmlid='mail.mail_notification_light',
+            attachment_ids=attachment_values,
+            force_send=force_send)
 
     @api.model
     def create(self, vals):
