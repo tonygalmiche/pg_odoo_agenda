@@ -157,6 +157,9 @@ class CalendarEvent(models.Model):
     is_invitation_refusee_ids  = fields.Many2many(comodel_name='res.partner', relation='calendar_event_res_partner_refusee', column1="event_id", column2="partner_id", string="Utilisateurs ayant refusés")
     is_invitation_acceptee_ids = fields.Many2many(comodel_name='res.partner', relation='calendar_event_res_partner_acceptee', column1="event_id", column2="partner_id", string="Utilisateurs ayant acceptés")
 
+    is_teams_event_id = fields.Char('Teams event_id', copy=False, index=True)
+    is_teams_ical_uid = fields.Char('Teams iCalUId' , copy=False, index=True)
+
 
 class CalendarAttendee(models.Model):
     _inherit = 'calendar.attendee'
