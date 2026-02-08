@@ -44,7 +44,6 @@
     </record>
     <record id="synchroniser_google_actions_server" model="ir.actions.server">
         <field name="name">Synchroniser avec Google</field>
-        <field name="groups_id" eval="[(4, ref('pg_odoo_agenda.is_google_synchronisation_group'))]"/>
         <field name="model_id" ref="calendar.model_calendar_event"/>
         <field name="binding_model_id" ref="calendar.model_calendar_event"/>
         <field name="binding_view_types">form,list</field>
@@ -57,11 +56,33 @@
         <field name="model">calendar.event</field>
         <field name="inherit_id" ref="calendar.view_calendar_event_calendar"/>
         <field name="arch" type="xml">
+            <field name="partner_ids" position="attributes">
+                <attribute name="color">is_calendar_color</attribute>
+            </field>
             <field name="partner_ids" position="after">
                 <field name="is_participants" widget="html"/>
             </field>
         </field>
     </record> 
+
+    <record id="is_view_calendar_event_form_quick_create" model="ir.ui.view">
+        <field name="name">is_view_calendar_event_form_quick_create</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_form_quick_create"/>
+        <field name="arch" type="xml">
+            <form position="inside">
+                <header>
+                    <field 
+                        name="is_alerte"
+                        style="background-color:orange;font-size:11pt;width:100%;white-space:pre-line;" 
+                        invisible="not is_alerte"
+                        readonly="1"
+                        nolabel="1"
+                    />
+                </header>
+            </form>
+        </field>
+    </record>
 
     <record id="is_view_calendar_event_form" model="ir.ui.view">
         <field name="name">is_view_calendar_event_form</field>
@@ -72,7 +93,8 @@
                 <field 
                     name="is_alerte"
                     style="background-color:orange;font-size:11pt" 
-                    attrs="{'invisible': [('is_alerte','=', False)],'readonly':True}"
+                    invisible="not is_alerte"
+                    readonly="1"
                 />
             </field>
 	    <field name="attendee_ids" position="after">
@@ -148,7 +170,7 @@
         <field name="name">Mes rendez-vous</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">calendar.event</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="limit">100</field>
         <field name="domain">[('start', '&gt;=', context_today().strftime('%Y-%m-%d')), ('partner_ids.user_ids', 'in', [uid]) ]</field>
         <field name="context">{'search_default_rdv_acceptes': True}</field>
@@ -183,47 +205,44 @@
         <field name="name">is_mes_invitations_tree</field>
         <field name="model">calendar.attendee</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="event_id"/>
                 <field name="partner_id"/>
                 <field name="is_user_id" optional="hide"/>
                 <field name="state"/>
                 <field name="email" widget="email"/>
-                <button name="do_tentative" states="needsAction,declined,accepted" string="Uncertain" type="object" icon="fa-asterisk"/>
-                <button name="do_accept" string="Accept" states="needsAction,tentative,declined" type="object" icon="fa-check text-success"/>
-                <button name="do_decline" string="Decline" states="needsAction,tentative,accepted" type="object" icon="fa-times-circle text-danger"/>
+                <button name="do_tentative" invisible="state not in ['needsAction', 'declined', 'accepted']" string="Uncertain" type="object" icon="fa-asterisk"/>
+                <button name="do_accept" string="Accept" invisible="state not in ['needsAction', 'tentative', 'declined']" type="object" icon="fa-check text-success"/>
+                <button name="do_decline" string="Decline" invisible="state not in ['needsAction', 'tentative', 'accepted']" type="object" icon="fa-times-circle text-danger"/>
                 <field name="create_date" optional="hide"/>
                 <field name="write_date"  optional="hide"/>
                 <field name="create_uid"  optional="hide"/>
                 <field name="write_uid"   optional="hide"/>
                 <field name="id"          optional="hide"/>
-            </tree>
+            </list>
         </field>
     </record>
     <record id="is_mes_invitations_search" model="ir.ui.view">
         <field name="name">is_mes_invitations_search</field>
         <field name="model">calendar.attendee</field>
+        <field name="priority">20</field>
         <field name="arch" type="xml">
-            <search string="Search attendees">
+            <search>
                 <field name="event_id"/>
                 <field name="partner_id"/>
                 <field name="is_user_id"/>
                 <field name="state"/>
                 <field name="email"/>
-                <separator/>
                 <filter string="Nécessite une action" name="needsAction" domain="[('state', '=', 'needsAction')]"/>
-                <separator/>
-                <group expand="0" string="Regrouper par">
-                    <filter string="Etat" name="state" domain="[]" context="{'group_by': 'state'}"/>
-                </group>
-            </search>
+                <filter string="Etat" name="state" domain="[]" context="{'group_by': 'state'}"/>
+            </search> 
         </field>
     </record>
     <record id="is_mes_invitations_action" model="ir.actions.act_window">
         <field name="name">Mes invitations</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">calendar.attendee</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="limit">100</field>
         <field name="domain">[('is_user_id','=',uid),('event_id.start', '&gt;=', context_today().strftime('%Y-%m-%d'))]</field>
         <field name="context">{'search_default_needsAction': True}</field>

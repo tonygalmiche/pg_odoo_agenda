@@ -73,15 +73,15 @@ class CalendarEvent(models.Model):
                         )
                     ORDER BY rp.name, e.name
                 """
-                self._cr.execute(SQL, [
-                    obj._origin.id, partner._origin.id, 
+                self.env.cr.execute(SQL, [
+                    obj._origin.id or 0, partner._origin.id, 
                     obj.start, obj.start, 
                     obj.stop , obj.stop, 
                     obj.start, obj.stop, 
                     obj.start, obj.stop, 
                     obj.start, obj.stop
                 ])
-                events=self._cr.fetchall()
+                events=self.env.cr.fetchall()
                 for e in events:
                     if e[2] == 'private':
                         event_name = 'Occupé(e)'
@@ -111,7 +111,7 @@ class CalendarEvent(models.Model):
 
 
     is_alerte       = fields.Text('Alerte'      , copy=False, compute=_compute_is_alerte)
-    is_participants = fields.Text('Participants', copy=False, compute=_compute_is_participants)
+    is_participants = fields.Html('Participants', copy=False, compute=_compute_is_participants, sanitize=False)
 
 
     def _ajouter_invitation_responsable_action(self):
@@ -196,7 +196,7 @@ class CalendarAttendee(models.Model):
     def send_mail_decline(self):
         attendee = self
         ics_files = self.mapped('event_id')._get_ics_file()
-        template_xmlid = 'pg_odoo_agenda.calendar_template_meeting_change'
+        template_xmlid = 'is_odoo_agenda19.calendar_template_meeting_change'
         invitation_template = self.env.ref(template_xmlid, raise_if_not_found=False)
         if not invitation_template:
             _logger.warning("Template %s could not be found. %s not notified." % (template_xmlid, self))
@@ -211,30 +211,31 @@ class CalendarAttendee(models.Model):
             'tentative': '#FFFF00',
             'declined': 'red'
         }
-        rendering_context = dict(self._context)
+        rendering_context = dict(self.env.context)
         rendering_context.update({
             'colors': colors,
             'ignore_recurrence': ignore_recurrence,
             'action_id': self.env['ir.actions.act_window'].sudo().search([('view_id', '=', calendar_view.id)], limit=1).id,
-            'dbname': self._cr.dbname,
+            'dbname': self.env.cr.dbname,
             'base_url': self.env['ir.config_parameter'].sudo().get_param('web.base.url', default='http://localhost:8069'),
         })
         #
         event_id = attendee.event_id.id
         ics_file = ics_files.get(event_id)
 
-        attachment_values = []
+        attachment_ids = []
         if ics_file:
-            attachment_values = [
-                (0, 0, {'name': 'invitation.ics',
-                        'mimetype': 'text/calendar',
-                        'datas': base64.b64encode(ics_file)})
-            ]
+            attachment = self.env['ir.attachment'].create({
+                'name': 'invitation.ics',
+                'mimetype': 'text/calendar',
+                'datas': base64.b64encode(ics_file),
+            })
+            attachment_ids = [attachment.id]
         body = invitation_template.with_context(rendering_context)._render_field(
             'body_html',
             attendee.ids,
             compute_lang=True,
-            post_process=True)[attendee.id]
+            options={'post_process': True})[attendee.id]
 
         subject = invitation_template._render_field(
             'subject',
@@ -256,7 +257,7 @@ class CalendarAttendee(models.Model):
             subject="[odoo-agenda] "+subject,
             partner_ids=[attendee.event_id.user_id.partner_id.id],
             email_layout_xmlid='mail.mail_notification_light',
-            attachment_ids=attachment_values,
+            attachment_ids=attachment_ids,
             force_send=force_send)
 
     @api.model
