@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from base64 import b64encode
 from odoo import api, fields, models
+from odoo.tools import html_escape
 
 # Palette complète des 56 couleurs Odoo 19 (index 0 à 55)
 # Correspondance avec $o-colors-complete dans secondary_variables.scss
@@ -62,3 +64,30 @@ class ResPartner(models.Model):
         for detail in result:
             detail['is_calendar_color'] = partner_colors.get(detail['id'], 0)
         return result
+
+    @staticmethod
+    def _mix_with_white(hex_color, white_pct=0.55):
+        """Reproduit mix($o-white, $color, 55%) du SCSS Odoo 19"""
+        h = hex_color.lstrip('#')
+        r = int(white_pct * 255 + (1 - white_pct) * int(h[0:2], 16))
+        g = int(white_pct * 255 + (1 - white_pct) * int(h[2:4], 16))
+        b = int(white_pct * 255 + (1 - white_pct) * int(h[4:6], 16))
+        return f'#{r:02x}{g:02x}{b:02x}'
+
+    def _avatar_generate_svg(self):
+        """Surcharge pour utiliser la couleur agenda (éclaircie) comme couleur d'avatar quand is_calendar_color > 0"""
+        if self.is_calendar_color and 0 < self.is_calendar_color < len(CALENDAR_COLORS):
+            initial = html_escape(self[self._avatar_name_field][0].upper())
+            bgcolor = self._mix_with_white(CALENDAR_COLORS[self.is_calendar_color])
+            # Couleur du texte : noir si fond clair, blanc si fond sombre
+            h = bgcolor.lstrip('#')
+            luma = 0.299 * int(h[0:2], 16) + 0.587 * int(h[2:4], 16) + 0.114 * int(h[4:6], 16)
+            text_color = '#000000' if luma >= 128 else '#ffffff'
+            return b64encode((
+                "<?xml version='1.0' encoding='UTF-8' ?>"
+                "<svg height='180' width='180' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>"
+                f"<rect fill='{bgcolor}' height='180' width='180'/>"
+                f"<text fill='{text_color}' font-size='96' text-anchor='middle' x='90' y='125' font-family='sans-serif'>{initial}</text>"
+                "</svg>"
+            ).encode())
+        return super()._avatar_generate_svg()
